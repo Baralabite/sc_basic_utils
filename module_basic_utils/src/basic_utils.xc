@@ -6,13 +6,20 @@
  *   basic utilities, such as wait().
  */
 
+#include <platform.h>
+#include <print.h>
+#include "stdio.h"
+
+const int BRATE = 19200;
+
 /*
  * Timing
  * Time Unit Conversion
  * String Handling
- * List/Array Handling
  * Basic Bitbanging
  * Type Conversions
+ * Logging
+ * Util
  */
 
 //==========[ Timing ]==========//
@@ -30,11 +37,12 @@ const int CLOCK_FREQUENCY = 100000000;
  * Returns: void
  * Description: Waits X milliseconds
 */
-void wait(int ms){
+void wait(int ms)
+{
 	timer tmr;
 	unsigned int count;
 	tmr :> count;
-	tmr += CLOCK_FREQUENCY/(1000/ms);
+	count += CLOCK_FREQUENCY/(1000/ms);
 	tmr when timerafter (count) :> void;
 	return;
 }
@@ -46,11 +54,12 @@ void wait(int ms){
  * Returns: void
  * Description: Waits X microseconds
 */
-void waitMicro(int us){
+void waitMicro(int us)
+{
 	timer tmr;
 	unsigned int count;
 	tmr :> count;
-	tmr += CLOCK_FREQUENCY/(1000000/us);
+	count += CLOCK_FREQUENCY/(1000000/us);
 	tmr when timerafter (count) :> void;
 	return;
 }
@@ -59,7 +68,8 @@ void waitMicro(int us){
  * Name: get_clock_frequency
  * Returns: int, clock frequency
 */
-int get_clock_frequency(){
+int get_clock_frequency()
+{
 	return CLOCK_FREQUENCY;
 }
 
@@ -72,7 +82,8 @@ int get_clock_frequency(){
  *   time for a specific baudrate
  *   considering the current clock frequency.
  */
-int calculate_bit_time(int baudrate){
+int calculate_bit_time(int baudrate)
+{
 	return get_clock_frequency() / baudrate;
 }
 
@@ -91,49 +102,135 @@ int calculate_bit_time(int baudrate){
  *  -  M: Minutes
 */
 
-int cc_to_us(int clock_cycles){
+int cc_to_us(int clock_cycles)
+{
 	return clock_cycles/100;
 }
 
-int us_to_cc(int us){
+int us_to_cc(int us)
+{
 	return us*100;
 }
 
-int us_to_ms(int us){
+int us_to_ms(int us)
+{
 	return us/1000;
 }
 
-int ms_to_us(int ms){
+int ms_to_us(int ms)
+{
 	return ms*1000;
 }
 
-int ms_to_s(int ms){
+int ms_to_s(int ms)
+{
 	return ms/1000;
 }
 
-int s_to_ms(int s){
+int s_to_ms(int s)
+{
 	return s*1000;
 }
 
-int s_to_m(int s){
+int s_to_m(int s)
+{
 	return s/60;
 }
 
-int m_to_s(int m){
+int m_to_s(int m)
+{
 	return m*60;
 }
 
 //==========[ String Handling ]==========//
-/*
- * Basic string handling functions, like
- * split, concat, etc.
- */
 
-//==========[ List Handing ]==========//
-/*
- * In here, I have list handing functions,
- * such as, remove, append, contains, etc.
- */
+/**
+ * Name: clear_string
+ * Parameters:
+ *   - char[] string_pointer - Pointer of
+ *       string to clear
+ * Description: Clears the inputted string,
+ * aka changes it to all null characters
+*/
+void clear_string(char string_pointer[])
+{
+	int i = 0;
+	while(string_pointer[i] != '\0')
+	{
+		string_pointer[i] = '\0';
+		i++;
+	}
+}
+
+/**
+ * Name: get_string_size
+ * Parameters:
+ *   - char[] string_pointer - String to find size of
+ * Returns: int
+ * Description: Returns the size of the inputted
+ * string, aka, the number of bytes before it hits
+ * a null character.
+*/
+int get_string_size(char string_pointer[])
+{
+	int cnt = 0;
+	while(string_pointer[cnt] != 0)
+	{
+		cnt++;
+	}
+	return cnt;
+}
+
+/**
+ * Name: append_string
+ * Parameters:
+ *   - char[] first - First string to append
+ *   - char[] second - Second string to append
+ *   - char[] result - Result of the first two
+ *       added together
+ * Description: Appends one string to another
+*/
+void append_string(char first[], char second[], char result[])
+{
+	//int size = get_string_size(first)+get_string_size(second);
+	sprintf(result, "%s%s", first, second);
+	//snprintf - TODO: Test this
+}
+
+/**
+ * Name: clone_string
+ * Parameters:
+ *   - char[] input - Input string
+ *   - char[] output - Output string
+ * Description: clones one char array
+ * to another
+*/
+void clone_string(char input[], char output[])
+{
+	clear_string(output);
+	for(int x = 0; x<get_string_size(input); x++)
+	{
+		output[x] = input[x];
+	}
+}
+
+/**
+ * Name: reverse_string
+ * Parameters:
+ *   - char[[] string_pointer - Pointer to string
+ * Description: Reverses string: "G'day" -> "yad'G"
+*/
+void reverse_string(char string_pointer[])
+{
+	int len = get_string_size(string_pointer);
+	char tmp[10];
+	clone_string(string_pointer, tmp);
+	clear_string(string_pointer);
+	for(int x=len; x>0; x--)
+	{
+		string_pointer[len-x] = tmp[x-1];
+	}
+}
 
 //==========[ Basic Bitbanging ]===========//
 /*
@@ -141,8 +238,6 @@ int m_to_s(int m){
  * functions for UART, I2C, and PWM
  * comms.
  */
-
-
 
 /**
  * Name: uart_tx
@@ -153,11 +248,11 @@ int m_to_s(int m){
  * Description: Transmits a byte using the UART
  *   protocol
 */
-void uart_tx(out port TXD, int byte, int baudrate){
+void uart_tx(out port TXD, int byte, int baudrate)
+{
 	int bit_time = calculate_bit_time(baudrate);
 	unsigned time;
 	timer t;
-	byte = getByte();
 	t :> time;
 
 	/* Output Start Bit */
@@ -166,7 +261,8 @@ void uart_tx(out port TXD, int byte, int baudrate){
 	t when timerafter(time) :> void;
 
 	/* Output Byte */
-	for (int i=0; i<8; i++){
+	for (int i=0; i<8; i++)
+	{
 		TXD <: >> byte;
 		time += bit_time;
 		t when timerafter(time) :> void;
@@ -175,7 +271,47 @@ void uart_tx(out port TXD, int byte, int baudrate){
 	/* Output Stop Bit */
 	TXD <: 1;
 	time += bit_time;
-	t when timerafteR(time) :> void;
+	t when timerafter(time) :> void;
+}
+
+/**
+ * Name: uart_tx_string
+ * Parameters:
+ *   - out port TXD: Port to transmit on
+ *   - char[] data: Bytes to transmit
+ *   - int baudrate; Baudrate to send at
+ * Description: Transmits a char arrayusing
+ *   the UART protocol
+*/
+void uart_tx_string(out port TXD, char data[], int baudrate)
+{
+	int bit_time = calculate_bit_time(baudrate);
+	unsigned time;
+	timer t;
+	int length = get_string_size(data);
+	t :> time;
+
+	for (int x=0; x<length; x++)
+	{
+		int byte = data[x];
+		/* Output Start Bit */
+		TXD <:0;
+		time += bit_time;
+		t when timerafter(time) :> void;
+
+		/* Output Byte */
+		for (int i=0; i<8; i++)
+		{
+			TXD <: >> byte;
+			time += bit_time;
+			t when timerafter(time) :> void;
+		}
+
+		/* Output Stop Bit */
+		TXD <: 1;
+		time += bit_time;
+		t when timerafter(time) :> void;
+	}
 }
 
 /**
@@ -187,7 +323,8 @@ void uart_tx(out port TXD, int byte, int baudrate){
  * Description: Recieves a byte using the UART
  *   protocol
 */
-int uart_rx(in port RXD, int baudrate){
+int uart_rx(in port RXD, int baudrate)
+{
 	int bit_time = calculate_bit_time(baudrate);
 	unsigned byte, time;
 	timer t;
@@ -195,11 +332,12 @@ int uart_rx(in port RXD, int baudrate){
 	/* Wait for start bit */
 	RXD when pinseq(0) :> void;
 	t :> time;
-	time += BIT_TIME/2;
+	time += bit_time/2;
 
 	/* Input data bits */
-	for (int i=0; i<8; i++){
-		time += bt_time;
+	for (int i=0; i<8; i++)
+	{
+		time += bit_time;
 		t when timerafter(time) :> void;
 		RXD :> >> byte;
 	}
@@ -222,10 +360,12 @@ int uart_rx(in port RXD, int baudrate){
  *   - int period: Time to PWM for in ms
  * Description: PWMs a pin for a duration
  */
-void pwm_output(out port output, int duty, int frequency, int period){
-	int cycle_length = 100000000 / frequency;
-	int duty_pulse_length = cycle_length / (100/duty);
-	for (int x = 0; x < (cycle_length/1000)*period; x++){
+void pwm_output(out port output, int duty, int frequency, int period)
+{
+	int cycle_length = 1000000 / frequency;
+	int duty_pulse_length = cycle_length / (100.0/duty);
+	for (int x = 0; x < 100000000000000; x++)
+	{
 		output <: 1;
 		waitMicro(duty_pulse_length);
 		output <: 0;
@@ -233,14 +373,113 @@ void pwm_output(out port output, int duty, int frequency, int period){
 	}
 }
 
-//TODO: Insert PWM Input
+//TODO: get_pwm_duty_cycle
+//TODO: get_pwm_frequency
+//TODO: get_average_voltage
 
 //TODO: Insert I2C output
-
 //TODO: Insert I2C input
 
 //==========[ Type Conversions ]==========//
 
-//TODO: Insert Char[] to Dec
+/**
+ * Name: int_to_string
+ * Parameters:
+ *   - int integer - Integer to be converted
+ *   - char[] string_pointer - String for
+ *       int to be put into
+ * Description: Converts int to str
+*/
+void int_to_string(int integer, char string_pointer[])
+{
+	sprintf(string_pointer, "%d", integer);
+}
 
-//TODO: Insert Dec to Char[]
+/**
+ * Name: str_to_int
+ * Parameters:
+ *   - char[] str - String to be converted
+ * Returns: int
+ * Description: String to integer
+*/
+int string_to_int(char str[])
+{
+	int output = 0;
+	int count = 1;
+	const int ascii_zero = 48;
+	int string_size = get_string_size(str);
+	reverse_string(str);
+
+	for(int x=0; x<string_size; x++)
+	{
+		int ascii = (int)str[x];
+		int i = ascii-ascii_zero;
+		output = output + count*i;
+		if (count == 1)
+		{
+			count = 10;
+		}
+		else
+		{
+			count = count * 10;
+		}
+	}
+	return output;
+}
+
+//==========[ Logging ]==========//
+
+enum LOG_LEVEL
+{
+	debug,
+	info,
+	warning,
+	error,
+	severe,
+	fatal
+} LOG_LEVEL;
+
+//TODO: Create Communicator "class"
+void log(out port TX, enum LOG_LEVEL level, char tag[], char data[])
+{
+	char result[256];
+	char tmp[256];
+	if (level==debug)
+	{
+		append_string("[DEBUG][", tag, result);
+		append_string(result, "] ", tmp);
+		clear_string(result);
+		append_string(tmp, data, result);
+		uart_tx_string(TX, result, BRATE);
+		uart_tx(TX, 13, BRATE);
+	}
+	else if(level==info)
+	{
+		printstrln("Info time!");
+	}
+	else if(level==warning)
+	{
+
+	}
+	else if(level==error)
+	{
+		printstrln("Error time!");
+	}
+	else if(level==severe)
+	{
+
+	}
+	else if(level==fatal)
+	{
+
+	}
+}
+
+//==========[ Util ]==========//
+
+void reset_chip()
+{
+	unsigned x;
+	read_sswitch_reg(get_core_id(), 6, x);
+	write_sswitch_reg(get_core_id(), 6, x);
+}

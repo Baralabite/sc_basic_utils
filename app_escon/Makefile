@@ -9,7 +9,7 @@ TARGET = XC-1A
 APP_NAME = app_escon
 
 # The USED_MODULES variable lists other module used by the application.
-USED_MODULES = sc_basic_utils\module_basic_utils
+USED_MODULES = sc_basic_utils/module_basic_utils
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
@@ -28,3 +28,5 @@ VERBOSE = 1
 
 XMOS_MAKE_PATH ?= ../..
 include $(XMOS_MAKE_PATH)/xcommon/module_xcommon/build/Makefile.common
+
+SOURCE_DIRS = src
